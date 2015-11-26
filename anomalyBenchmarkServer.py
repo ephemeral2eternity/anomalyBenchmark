@@ -6,7 +6,7 @@ import sys
 import os
 import subprocess as sub
 import urlparse
-from time import sleep
+import time
 
 try:
     # Python 2.x
@@ -35,6 +35,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				print cpu_stress_params
 				cpu_stress_workers = cpu_stress_params['N'][0]
 				cpu_stress_period = cpu_stress_params['T'][0]
+
+				# Append stress log to anomaly.log
+				with open("anomaly.log", "a") as logFile:
+					logFile.write(str(time.time()) + ", cpu, " + str(cpu_stress_period) + ", " + str(cpu_stress_workers) + "\n")
+
 				p = sub.Popen('stress --cpu ' + cpu_stress_workers + ' --timeout ' + cpu_stress_period, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
 				# output, errors = p.communicate()
 
@@ -54,6 +59,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				print io_stress_params
 				io_stress_workers = io_stress_params['N'][0]
 				io_stress_period = io_stress_params['T'][0]
+
+				# Append stress log to anomaly.log
+				with open("anomaly.log", "a") as logFile:
+					logFile.write(str(time.time()) + ", io, " + str(io_stress_period) + ", " + str(io_stress_workers) + "\n")
+
 				p = sub.Popen('stress --io ' + io_stress_workers + ' --timeout ' + io_stress_period, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
 
 				#note that this potentially makes every file on your computer readable by the internet
@@ -72,6 +82,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				mem_stress_workers = mem_stress_params['N'][0]
 				mem_size_per_worker = mem_stress_params['B'][0]
 				mem_stress_period = mem_stress_params['T'][0]
+
+				# Append stress log to anomaly.log
+				with open("anomaly.log", "a") as logFile:
+					logFile.write(str(time.time()) + ", mem, " + str(mem_stress_period) + ", " + str(mem_stress_workers) + ", " + str(mem_size_per_worker)+ "\n")
+
 				p = sub.Popen('stress --vm ' + mem_stress_workers + ' --vm-bytes ' + mem_size_per_worker + 'M --timeout ' + mem_stress_period, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
 
 				#note that this potentially makes every file on your computer readable by the internet
@@ -96,6 +111,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				else:
 					bw_cmd = './limitOutbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
 					intf_name = 'outbound'
+				
+				# Append stress log to anomaly.log
+				with open("anomaly.log", "a") as logFile:
+					logFile.write(str(time.time()) + ", bw-" + intf_name + ", " + str(bw_stress_period) + ", " + str(bw_capacity) + "\n")
+
 				p = sub.Popen(bw_cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
 
 				#note that this potentially makes every file on your computer readable by the internet
