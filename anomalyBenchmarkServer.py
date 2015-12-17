@@ -125,6 +125,27 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				# serve the HTML code to client on Google App Engine Python using webapp2
 				self.wfile.write("Throttling the bandwidth on " + intf_name + " to " + bw_capacity + "kbps for " + bw_stress_period + " seconds!")
 				return
+			elif self.path.startswith('/httpd'):
+				# default: just send the file
+				url = self.path
+				params = url.split('?')[1]
+				print params
+				httpd_stop_params = urlparse.parse_qs(params)
+				httpd_stop_period = httpd_stop_params['T'][0]
+				httpd_cmd = script_folder + '/stop_httpd.sh ' + str(httpd_stop_period)
+				
+				# Append stress log to anomaly.log
+				with open(script_folder +"/anomaly.log", "a") as logFile:
+					logFile.write(str(time.time()) + ",httpd," + str(httpd_stop_period) + ",stop\n")
+
+				p = sub.Popen(httpd_cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
+
+				#note that this potentially makes every file on your computer readable by the internet
+				self.send_response(200)
+				self.end_headers()
+				# serve the HTML code to client on Google App Engine Python using webapp2
+				self.wfile.write("Stops Apache2 httpd server for " + httpd_stop_period + " seconds!")
+				return
 
 		except IOError as e :  
 			# debug     
