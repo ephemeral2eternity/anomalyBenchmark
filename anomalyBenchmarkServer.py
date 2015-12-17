@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Cache Agent in Agent based management and control system
 # Chen Wang, chenw@cmu.edu
 #!/bin/env python
@@ -23,6 +23,7 @@ class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
 
 class RequestHandler(SimpleHTTPRequestHandler):
 	def do_GET(self):
+		script_folder = os.path.dirname(os.path.realpath(__file__))
 		try:
 			if "ico" in self.command:
 				return
@@ -37,7 +38,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				cpu_stress_period = cpu_stress_params['T'][0]
 
 				# Append stress log to anomaly.log
-				with open("anomaly.log", "a") as logFile:
+				with open(script_folder + "/anomaly.log", "a") as logFile:
 					logFile.write(str(time.time()) + ", cpu, " + str(cpu_stress_period) + ", " + str(cpu_stress_workers) + "\n")
 
 				p = sub.Popen('stress --cpu ' + cpu_stress_workers + ' --timeout ' + cpu_stress_period, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
@@ -61,7 +62,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				io_stress_period = io_stress_params['T'][0]
 
 				# Append stress log to anomaly.log
-				with open("anomaly.log", "a") as logFile:
+				with open(script_folder + "/anomaly.log", "a") as logFile:
 					logFile.write(str(time.time()) + ", io, " + str(io_stress_period) + ", " + str(io_stress_workers) + "\n")
 
 				p = sub.Popen('stress --io ' + io_stress_workers + ' --timeout ' + io_stress_period, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
@@ -84,7 +85,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				mem_stress_period = mem_stress_params['T'][0]
 
 				# Append stress log to anomaly.log
-				with open("anomaly.log", "a") as logFile:
+				with open(script_folder +"/anomaly.log", "a") as logFile:
 					logFile.write(str(time.time()) + ", mem, " + str(mem_stress_period) + ", " + str(mem_stress_workers) + ", " + str(mem_size_per_worker)+ "\n")
 
 				p = sub.Popen('stress --vm ' + mem_stress_workers + ' --vm-bytes ' + mem_size_per_worker + 'M --timeout ' + mem_stress_period, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
@@ -106,14 +107,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				bw_capacity = bw_stress_params['X'][0]
 				bw_stress_period = bw_stress_params['T'][0]
 				if bw_throttle_interface is '0':
-					bw_cmd = './limitInbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
+					bw_cmd = script_folder + '/limitInbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
 					intf_name = 'inbound'
 				else:
-					bw_cmd = './limitOutbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
+					bw_cmd = script_folder + '/limitOutbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
 					intf_name = 'outbound'
 				
 				# Append stress log to anomaly.log
-				with open("anomaly.log", "a") as logFile:
+				with open(script_folder +"/anomaly.log", "a") as logFile:
 					logFile.write(str(time.time()) + ", bw-" + intf_name + ", " + str(bw_stress_period) + ", " + str(bw_capacity) + "\n")
 
 				p = sub.Popen(bw_cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
