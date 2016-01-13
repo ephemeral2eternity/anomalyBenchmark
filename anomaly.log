@@ -1,8 +1,0 @@
-Server IP: 162.209.106.193
-Timestamp, Type, Duration(Seconds), Anomaly Parameters
-1448670625.26, cpu, 20, 1
-1448670658.19, bw-outbound, 5, 500
-1448758672.88, cpu, 10, 1
-1449536831.24, cpu, 20, 1
-1450391417.96,httpd,30,stop
-1452483202.99, cpu, 40, 6
