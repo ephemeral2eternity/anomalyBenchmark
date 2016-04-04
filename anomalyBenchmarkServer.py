@@ -146,6 +146,29 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				# serve the HTML code to client on Google App Engine Python using webapp2
 				self.wfile.write("Stops Apache2 httpd server for " + httpd_stop_period + " seconds!")
 				return
+			elif self.path.startswith('/lat'):
+				# default: just send the file
+				url = self.path
+				params = url.split('?')[1]
+				print params
+				lat_params = urlparse.parse_qs(params)
+				lat_period = lat_params['T'][0]
+				lat_val = lat_params['L'][0]
+				lat_ip = lat_params['ip'][0]
+				add_lat_cmd = script_folder + '/addLatPerIP.sh ' + str(lat_period) + ' ' + str(lat_ip) + ' ' + str(lat_val)
+				
+				# Append stress log to anomaly.log
+				with open(script_folder +"/anomaly.log", "a") as logFile:
+					logFile.write(str(time.time()) + ",addlat," + str(lat_period) + "," + lat_ip + "," + lat_val + "\n")
+
+				p = sub.Popen(add_lat_cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
+
+				#note that this potentially makes every file on your computer readable by the internet
+				self.send_response(200)
+				self.end_headers()
+				# serve the HTML code to client on Google App Engine Python using webapp2
+				self.wfile.write("Add latency " + lat_val + " for packets to prefix " + lat_ip + " for " + lat_period +" seconds!")
+				return
 
 		except IOError as e :  
 			# debug     
