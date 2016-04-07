@@ -13,6 +13,8 @@ then
 	percent=$2
 fi
 
+echo "Clear all previous filters"
+sudo tc qdisc del dev eth0 root
 echo "Starts dropping $percent packets for $period seconds!"
 sudo tc qdisc add dev eth0 root netem loss ${percent}
 sleep $period

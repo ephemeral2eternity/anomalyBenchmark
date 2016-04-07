@@ -106,16 +106,22 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				bw_throttle_interface = bw_stress_params['type'][0]
 				bw_capacity = bw_stress_params['X'][0]
 				bw_stress_period = bw_stress_params['T'][0]
-				if bw_throttle_interface is '0':
-					bw_cmd = script_folder + '/limitInbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
-					intf_name = 'inbound'
+				bwIP = bw_stress_params['ip'][0]
+				if bwIP.lower() == 'all':
+					if bw_throttle_interface is '0':
+						bw_cmd = script_folder + '/limitInbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
+						cmd_name = 'bw-inbound'
+					else:
+						bw_cmd = script_folder + '/limitOutbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
+						cmd_name = 'bw-outbound'
 				else:
-					bw_cmd = script_folder + '/limitOutbound.sh ' + str(bw_stress_period) + ' ' + bw_capacity
-					intf_name = 'outbound'
+					bw_cmd = script_folder + '/limitOutboundPerIP.sh ' + str(bw_stress_period) + ' ' + bwIP + ' ' + str(bw_capacity) + 'Kbps'
+					cmd_name = 'bw-perIP'
+					
 				
 				# Append stress log to anomaly.log
 				with open(script_folder +"/anomaly.log", "a") as logFile:
-					logFile.write(str(time.time()) + ", bw-" + intf_name + ", " + str(bw_stress_period) + ", " + str(bw_capacity) + "\n")
+					logFile.write(str(time.time()) + "," + cmd_name + ", " + str(bw_stress_period) + ", " + str(bw_capacity) + "," + bwIP + "\n")
 
 				p = sub.Popen(bw_cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
 
@@ -123,7 +129,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				self.send_response(200)
 				self.end_headers()
 				# serve the HTML code to client on Google App Engine Python using webapp2
-				self.wfile.write("Throttling the bandwidth on " + intf_name + " to " + bw_capacity + "kbps for " + bw_stress_period + " seconds!")
+				self.wfile.write("Throttling the bandwidth with cmd " + cmd_name + " to " + bw_capacity + "kbps for " + bw_stress_period + " seconds!")
 				return
 			elif self.path.startswith('/httpd'):
 				# default: just send the file
@@ -155,7 +161,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				lat_period = lat_params['T'][0]
 				lat_val = lat_params['L'][0]
 				lat_ip = lat_params['ip'][0]
-				add_lat_cmd = script_folder + '/addLatPerIP.sh ' + str(lat_period) + ' ' + str(lat_ip) + ' ' + str(lat_val)
+				if lat_ip.lower() == 'all':
+					add_lat_cmd = script_folder + '/addLatency.sh ' + str(lat_period) + ' ' + str(lat_val)
+				else:
+					add_lat_cmd = script_folder + '/addLatPerIP.sh ' + str(lat_period) + ' ' + str(lat_ip) + ' ' + str(lat_val)
+				print add_lat_cmd
 				
 				# Append stress log to anomaly.log
 				with open(script_folder +"/anomaly.log", "a") as logFile:
@@ -168,6 +178,32 @@ class RequestHandler(SimpleHTTPRequestHandler):
 				self.end_headers()
 				# serve the HTML code to client on Google App Engine Python using webapp2
 				self.wfile.write("Add latency " + lat_val + " for packets to prefix " + lat_ip + " for " + lat_period +" seconds!")
+				return
+			elif self.path.startswith('/drop'):
+				# default: just send the file
+				url = self.path
+				params = url.split('?')[1]
+				print params
+				drop_params = urlparse.parse_qs(params)
+				drop_period = drop_params['T'][0]
+				drop_percent = drop_params['P'][0]
+				drop_ip = drop_params['ip'][0]
+				if drop_ip.lower() == 'all':
+					drop_pkts_cmd = script_folder + '/dropPkts.sh ' + str(drop_period) + ' ' + str(drop_percent)
+				else:
+					drop_pkts_cmd = script_folder + '/dropPktsPerIP.sh ' + str(drop_period) + ' ' + str(drop_ip) + ' ' + str(drop_percent)
+				
+				# Append stress log to anomaly.log
+				with open(script_folder +"/anomaly.log", "a") as logFile:
+					logFile.write(str(time.time()) + ",dropPkts," + str(drop_period) + "," + drop_ip + "," + drop_percent + "\n")
+
+				p = sub.Popen(drop_pkts_cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
+
+				#note that this potentially makes every file on your computer readable by the internet
+				self.send_response(200)
+				self.end_headers()
+				# serve the HTML code to client on Google App Engine Python using webapp2
+				self.wfile.write("Drop " + drop_percent + " packets to IP prefix " + drop_ip + " for " + drop_period +" seconds!")
 				return
 
 		except IOError as e :  
