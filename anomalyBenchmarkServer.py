@@ -5,16 +5,17 @@
 import sys
 import os
 import subprocess as sub
-import urlparse
 import time
 
 try:
     # Python 2.x
+    import urlparse
     from SocketServer import ThreadingMixIn
     from SimpleHTTPServer import SimpleHTTPRequestHandler
     from BaseHTTPServer import HTTPServer
 except ImportError:
     # Python 3.x
+    from urllib.parse import urlparse
     from socketserver import ThreadingMixIn
     from http.server import SimpleHTTPRequestHandler, HTTPServer
 
